@@ -498,21 +498,51 @@
             'Спишь?'
         ];
         
-        // Sound effects
-        const sounds = {
-            flip: new Audio('flip.mp3'),
-            match: new Audio('matched.mp3'),
-            win: new Audio('win.mp3')
-        };
+        // Sound system — Web Audio API for reliable low-latency mobile playback
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioContext = null;
+        const audioBuffers = {};
         let soundEnabled = true;
-        
-        // Play sound helper
-        function playSound(soundName) {
-            if (soundEnabled && sounds[soundName]) {
-                sounds[soundName].currentTime = 0;
-                sounds[soundName].play().catch(() => {});
+
+        // Preload and decode all sound files into memory
+        async function initAudioSystem() {
+            try {
+                audioContext = new AudioCtx();
+                const soundFiles = { flip: 'flip.mp3', match: 'matched.mp3', win: 'win.mp3' };
+                await Promise.all(
+                    Object.entries(soundFiles).map(async ([name, url]) => {
+                        try {
+                            const resp = await fetch(url);
+                            const buf = await resp.arrayBuffer();
+                            audioBuffers[name] = await audioContext.decodeAudioData(buf);
+                        } catch (_) { /* sound load failed, continue silently */ }
+                    })
+                );
+            } catch (_) { /* Web Audio API not supported */ }
+        }
+
+        // Unlock AudioContext on first user gesture (required by mobile browsers)
+        function unlockAudio() {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
             }
         }
+        document.addEventListener('touchstart', unlockAudio, { once: true });
+        document.addEventListener('touchend', unlockAudio, { once: true });
+        document.addEventListener('click', unlockAudio, { once: true });
+
+        // Play sound — creates a fresh source node each time (instant, no conflicts)
+        function playSound(soundName) {
+            if (!soundEnabled || !audioContext || !audioBuffers[soundName]) return;
+            if (audioContext.state === 'suspended') audioContext.resume();
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffers[soundName];
+            source.connect(audioContext.destination);
+            source.start(0);
+        }
+
+        // Start loading audio immediately
+        initAudioSystem();
         
         // Game state
         let cards = [];
