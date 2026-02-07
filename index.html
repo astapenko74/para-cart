@@ -66,6 +66,7 @@
             line-height: 0.9;
             height: 36px;
             color: #3BA8EA;
+            cursor: pointer;
         }
 
         /* Sound button */
@@ -278,6 +279,63 @@
             transform: scale(0.98);
         }
 
+        /* Main Screen */
+        .main-screen {
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            background: #181818;
+            overflow: hidden;
+        }
+
+        .main-title-area {
+            flex: 1;
+            position: relative;
+            min-height: 0;
+        }
+
+        .main-title {
+            position: absolute;
+            font-family: "Montserrat", sans-serif;
+            font-weight: 300;
+            color: #3BA8EA;
+            line-height: 0.85;
+            white-space: nowrap;
+        }
+
+        .main-title span {
+            display: inline-block;
+            transition: color 0.3s ease;
+        }
+
+        .start-btn {
+            width: 100%;
+            height: 56px;
+            background: #fff;
+            border: none;
+            border-radius: 16px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 20px;
+            font-weight: 400;
+            line-height: 100%;
+            color: #181818;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .start-btn:hover {
+            opacity: 0.8;
+        }
+
+        .start-btn:active {
+            transform: scale(0.98);
+        }
+
         /* Hide desktop sound button on mobile */
         .sound-btn-desktop {
             display: none;
@@ -432,10 +490,22 @@
     </style>
 </head>
 <body>
-    <div class="game-wrapper">
+    <!-- Main Screen -->
+    <div class="main-screen" id="mainScreen">
+        <div class="main-title-area" id="mainTitleArea">
+            <div class="main-title" id="mainTitle">
+                <div><span>П</span><span>А</span><span>Р</span><span>А</span></div>
+                <div><span>К</span><span>А</span><span>Р</span><span>Т</span></div>
+            </div>
+        </div>
+        <button class="start-btn" id="startBtn">Начать игру</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-wrapper" id="gameScreen" style="display: none;">
         <!-- Header -->
         <div class="header">
-            <div class="logo">ПАРА<br>КАРТ</div>
+            <div class="logo" id="logoBtn">ПАРА<br>КАРТ</div>
             <button class="test-btn" id="testBtn" onclick="endGame()" style="display: none;">TEST</button>
             <button class="sound-btn" id="soundBtn" aria-label="Toggle sound">
                 <svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg">
@@ -735,8 +805,118 @@
         soundBtn.addEventListener('click', toggleSound);
         soundBtnDesktop.addEventListener('click', toggleSound);
 
-        // Start
-        initGame();
+        // === MAIN SCREEN ===
+
+        const TITLE_CHARS = ['П', 'А', 'Р', 'А', 'К', 'А', 'Р', 'Т'];
+        let titleSpans = [];
+        let titleAnimTimer = null;
+        let titleAnimRunning = false;
+
+        // Layout: rotate title 90° and scale to fill container width
+        function layoutMainTitle() {
+            const area = document.getElementById('mainTitleArea');
+            const title = document.getElementById('mainTitle');
+            const availW = area.clientWidth;
+
+            // Measure at base size without rotation
+            title.style.transform = 'none';
+            title.style.fontSize = '100px';
+            const baseW = title.offsetWidth;
+            const baseH = title.offsetHeight;
+
+            // After 90° rotation: visual width = original height
+            // Scale font so rotated text fills container width
+            const scale = availW / baseH;
+            const fontSize = Math.floor(100 * scale);
+            title.style.fontSize = fontSize + 'px';
+
+            // Measure at final size
+            const textW = title.offsetWidth;
+            const textH = title.offsetHeight;
+
+            // Position so visual top = 0 and horizontally centered after rotation
+            title.style.left = (availW / 2 - textW / 2) + 'px';
+            title.style.top = (textW / 2 - textH / 2) + 'px';
+            title.style.transform = 'rotate(90deg)';
+        }
+
+        // Title animation: demonstrates the matching mechanic
+        function startTitleAnimation() {
+            titleSpans = document.querySelectorAll('#mainTitle span');
+            titleAnimRunning = true;
+            titleAnimTimer = setTimeout(titleAnimStep, 800);
+        }
+
+        function stopTitleAnimation() {
+            titleAnimRunning = false;
+            if (titleAnimTimer) { clearTimeout(titleAnimTimer); titleAnimTimer = null; }
+            titleSpans.forEach(s => s.style.color = '');
+        }
+
+        function titleAnimStep() {
+            if (!titleAnimRunning) return;
+            const len = TITLE_CHARS.length;
+            const i1 = Math.floor(Math.random() * len);
+            let i2;
+            do { i2 = Math.floor(Math.random() * len); } while (i2 === i1);
+
+            const s1 = titleSpans[i1];
+            const s2 = titleSpans[i2];
+
+            // Highlight pair
+            s1.style.color = '#206CF3';
+            s2.style.color = '#206CF3';
+
+            setTimeout(() => {
+                if (!titleAnimRunning) return;
+                if (TITLE_CHARS[i1] === TITLE_CHARS[i2]) {
+                    // Match → green flash → return
+                    s1.style.color = '#CCED00';
+                    s2.style.color = '#CCED00';
+                    setTimeout(() => {
+                        if (!titleAnimRunning) return;
+                        s1.style.color = '';
+                        s2.style.color = '';
+                        titleAnimTimer = setTimeout(titleAnimStep, 600);
+                    }, 500);
+                } else {
+                    // No match → return
+                    s1.style.color = '';
+                    s2.style.color = '';
+                    titleAnimTimer = setTimeout(titleAnimStep, 600);
+                }
+            }, 700);
+        }
+
+        // Screen navigation
+        function showMainScreen() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'flex';
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            layoutMainTitle();
+            startTitleAnimation();
+        }
+
+        function showGameScreen() {
+            stopTitleAnimation();
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = '';
+            initGame();
+        }
+
+        // Resize handler — re-layout title if main screen is visible
+        window.addEventListener('resize', () => {
+            if (document.getElementById('mainScreen').style.display !== 'none') {
+                layoutMainTitle();
+            }
+        });
+
+        // Navigation event listeners
+        document.getElementById('startBtn').addEventListener('click', showGameScreen);
+        document.getElementById('logoBtn').addEventListener('click', showMainScreen);
+
+        // Start on main screen
+        showMainScreen();
     </script>
 </body>
 </html>
