@@ -6,9 +6,9 @@
     --color-bg: #000000;
     --color-text: #ffffff;
     --color-text-muted: rgba(255, 255, 255, 0.5);
-    --color-primary: #3BA8EA;
-    --color-secondary: #206CF3;
-    --color-accent: #CCED00;
+    --color-primary: #d5bff2;
+    --color-secondary: #d5bff2;
+    --color-accent: #FFDD2D;
 
     /* Typography */
     --font-primary: "Montserrat", sans-serif;

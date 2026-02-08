@@ -458,20 +458,20 @@ function titleAnimStep() {
     const s2 = titleSpans[i2];
 
     // First card
-    s1.style.fill = '#206CF3';
+    s1.style.fill = '#d5bff2';
 
     setTimeout(() => {
         if (!titleAnimRunning) return;
         // Second card
-        s2.style.fill = '#206CF3';
+        s2.style.fill = '#d5bff2';
 
         setTimeout(() => {
             if (!titleAnimRunning) return;
             if (TITLE_CHARS[i1] === TITLE_CHARS[i2]) {
                 // Match → green flash → return
                 titleMissCount = 0;
-                s1.style.fill = '#CCED00';
-                s2.style.fill = '#CCED00';
+                s1.style.fill = '#FFDD2D';
+                s2.style.fill = '#FFDD2D';
                 setTimeout(() => {
                     if (!titleAnimRunning) return;
                     s1.style.fill = '';
