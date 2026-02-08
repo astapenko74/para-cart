@@ -1,6 +1,28 @@
 // Game configuration - 6 pairs for 3x4 grid
 const EMOJIS = ['👹', '🤡', '👽', '🎃', '🤖', '🐸'];
 
+// Win emojis - shown randomly on victory
+const WIN_EMOJIS = [
+    'emojis/thumbs-up.png',
+    'emojis/mechanical-arm.png',
+    'emojis/fire.png',
+    'emojis/flexed-biceps.png',
+    'emojis/heart-on-fire.png',
+    'emojis/pinched-fingers.png',
+    'emojis/party-popper.png',
+    'emojis/sparkles.png',
+    'emojis/trophy.png'
+];
+
+// Lose emojis - shown randomly on defeat
+const LOSE_EMOJIS = [
+    'emojis/moai.png',
+    'emojis/neutral-face.png',
+    'emojis/penguin.png',
+    'emojis/face-symbols.png',
+    'emojis/face-exhaling.png'
+];
+
 // Win phrases - shown randomly on victory
 const WIN_PHRASES = [
     'Да у тебя талант!',
@@ -10,6 +32,17 @@ const WIN_PHRASES = [
     'Вот это скорость!',
     'Спишь?'
 ];
+
+// Lose phrases - shown randomly on defeat
+const LOSE_PHRASES = [
+    'Давай ещё',
+    'У тебя получится',
+    'Не сдавайся',
+    'Не в этот раз'
+];
+
+const TIMED_MODE_DURATION = 20000; // 20 seconds
+const LIMITED_MODE_MAX_ATTEMPTS = 12;
 
 // ==================== //
 // SOUND SYSTEM          //
@@ -77,14 +110,18 @@ let startTime = null;
 let elapsedTime = 0;
 let gameStarted = false;
 let bestTime = localStorage.getItem('duoQuestBestTime') ? parseInt(localStorage.getItem('duoQuestBestTime')) : null;
+let attempts = 0;
 
 // DOM elements
 const gameBoard = document.getElementById('gameBoard');
 const timerDisplay = document.getElementById('timer');
 const winCard = document.getElementById('winCard');
+const loseCard = document.getElementById('loseCard');
 const playAgainBtn = document.getElementById('playAgainBtn');
+const playAgainLoseBtn = document.getElementById('playAgainLoseBtn');
 const bestTimeDisplay = document.getElementById('bestTimeDisplay');
 const bestTimeElement = document.getElementById('bestTime');
+const remainingLabel = document.getElementById('remainingLabel');
 
 // ==================== //
 // GAME LOGIC            //
@@ -98,18 +135,34 @@ function initGame() {
     isLocked = false;
     gameStarted = false;
     elapsedTime = 0;
+    attempts = 0;
 
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
-    timerDisplay.innerHTML = '00:00<span class="ms">.00</span>';
 
-    // Show best time (or 00:00.00 if none)
-    if (bestTime) {
-        bestTimeElement.innerHTML = formatTime(bestTime);
+    // Mode-specific UI setup
+    if (currentMode === 'timed') {
+        bestTimeDisplay.style.display = 'none';
+        remainingLabel.style.display = 'block';
+        remainingLabel.textContent = 'Осталось';
+        timerDisplay.innerHTML = formatTime(TIMED_MODE_DURATION);
+    } else if (currentMode === 'limited') {
+        bestTimeDisplay.style.display = 'none';
+        remainingLabel.style.display = 'block';
+        remainingLabel.textContent = 'Попыток';
+        timerDisplay.innerHTML = formatAttempts(0);
     } else {
-        bestTimeElement.innerHTML = '00:00<span class="ms">.00</span>';
+        bestTimeDisplay.style.display = 'block';
+        remainingLabel.style.display = 'none';
+        timerDisplay.innerHTML = '00:00<span class="ms">.00</span>';
+        // Show best time (or 00:00.00 if none)
+        if (bestTime) {
+            bestTimeElement.innerHTML = formatTime(bestTime);
+        } else {
+            bestTimeElement.innerHTML = '00:00<span class="ms">.00</span>';
+        }
     }
 
     // Create card pairs (6 pairs = 12 cards for 3x4 grid)
@@ -139,9 +192,11 @@ function initGame() {
         cards.push(card);
     });
 
-    // Hide win card, show game board
+    // Hide win/lose cards, show game board
     winCard.classList.remove('show');
     winCard.classList.remove('visible');
+    loseCard.classList.remove('show');
+    loseCard.classList.remove('visible');
     gameBoard.style.display = 'grid';
 }
 
@@ -156,8 +211,10 @@ function flipCard(card) {
 
     if (!gameStarted) {
         gameStarted = true;
-        startTime = Date.now();
-        timerInterval = setInterval(updateTimer, 10);
+        if (currentMode !== 'limited') {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 10);
+        }
     }
 
     card.classList.add('flipped');
@@ -173,6 +230,12 @@ function flipCard(card) {
 function checkMatch() {
     isLocked = true;
     const [card1, card2] = flippedCards;
+
+    // Count attempt in limited mode
+    if (currentMode === 'limited') {
+        attempts++;
+        timerDisplay.innerHTML = formatAttempts(attempts);
+    }
 
     if (card1.dataset.emoji === card2.dataset.emoji) {
         setTimeout(() => {
@@ -193,6 +256,11 @@ function checkMatch() {
             card2.classList.remove('flipped');
             flippedCards = [];
             isLocked = false;
+
+            // Check lose condition in limited mode
+            if (currentMode === 'limited' && attempts >= LIMITED_MODE_MAX_ATTEMPTS) {
+                loseGame();
+            }
         }, 600);
     }
 }
@@ -200,7 +268,18 @@ function checkMatch() {
 // Update timer
 function updateTimer() {
     elapsedTime = Date.now() - startTime;
-    timerDisplay.innerHTML = formatTime(elapsedTime);
+
+    if (currentMode === 'timed') {
+        const remaining = TIMED_MODE_DURATION - elapsedTime;
+        if (remaining <= 0) {
+            timerDisplay.innerHTML = formatTime(0);
+            loseGame();
+            return;
+        }
+        timerDisplay.innerHTML = formatTime(remaining);
+    } else {
+        timerDisplay.innerHTML = formatTime(elapsedTime);
+    }
 }
 
 // Format time
@@ -212,20 +291,29 @@ function formatTime(ms) {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}<span class="ms">.${milliseconds.toString().padStart(2, '0')}</span>`;
 }
 
-// End game
+// Format attempts for limited mode
+function formatAttempts(count) {
+    return `${count}<span class="ms"> / ${LIMITED_MODE_MAX_ATTEMPTS}</span>`;
+}
+
+// End game (win)
 function endGame() {
     clearInterval(timerInterval);
     playSound('win');
 
-    // Show random win phrase
+    // Show random win phrase and emoji
     const randomPhrase = WIN_PHRASES[Math.floor(Math.random() * WIN_PHRASES.length)];
-    document.querySelector('.win-title').textContent = randomPhrase;
+    document.querySelector('#winCard .win-title').textContent = randomPhrase;
+    const randomEmoji = WIN_EMOJIS[Math.floor(Math.random() * WIN_EMOJIS.length)];
+    document.getElementById('winEmoji').src = randomEmoji;
 
-    // Update best time if needed
-    if (!bestTime || elapsedTime < bestTime) {
-        bestTime = elapsedTime;
-        localStorage.setItem('duoQuestBestTime', bestTime);
-        bestTimeElement.innerHTML = formatTime(bestTime);
+    // Update best time if needed (classic mode only)
+    if (currentMode === 'classic') {
+        if (!bestTime || elapsedTime < bestTime) {
+            bestTime = elapsedTime;
+            localStorage.setItem('duoQuestBestTime', bestTime);
+            bestTimeElement.innerHTML = formatTime(bestTime);
+        }
     }
 
     // Hide game board, show win card with animation
@@ -240,8 +328,32 @@ function endGame() {
     }, 300);
 }
 
+// Lose game (timed mode)
+function loseGame() {
+    clearInterval(timerInterval);
+    isLocked = true;
+
+    // Show random lose phrase and emoji
+    const randomPhrase = LOSE_PHRASES[Math.floor(Math.random() * LOSE_PHRASES.length)];
+    document.getElementById('loseTitle').textContent = randomPhrase;
+    const randomEmoji = LOSE_EMOJIS[Math.floor(Math.random() * LOSE_EMOJIS.length)];
+    document.getElementById('loseEmoji').src = randomEmoji;
+
+    // Hide game board, show lose card with animation
+    setTimeout(() => {
+        gameBoard.style.display = 'none';
+        loseCard.classList.add('visible');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                loseCard.classList.add('show');
+            });
+        });
+    }, 300);
+}
+
 // Event listeners
 playAgainBtn.addEventListener('click', initGame);
+playAgainLoseBtn.addEventListener('click', initGame);
 
 // Sound toggle
 const soundBtn = document.getElementById('soundBtn');
@@ -274,9 +386,9 @@ let titleAnimTimer = null;
 let titleAnimRunning = false;
 let titleMissCount = 0;
 
-// SVG natural dimensions from viewBox
-const SVG_W = 324;
-const SVG_H = 563;
+// SVG natural dimensions from viewBox (horizontal)
+const SVG_W = 563;
+const SVG_H = 324;
 
 // Layout: scale SVG title to fill available space
 function layoutMainTitle() {
@@ -285,27 +397,28 @@ function layoutMainTitle() {
     const title = document.getElementById('mainTitle');
 
     if (isDesktop) {
-        // Desktop: rotate 90° to horizontal, stretch to fill viewport width (minus padding)
+        // Desktop: stretch to fill viewport width (minus padding)
         const viewW = window.innerWidth - 100; // 50px padding on each side
-        const scale = viewW / SVG_H; // After 90° rotation, SVG_H becomes visual width
+        const scale = viewW / SVG_W;
         const w = Math.floor(SVG_W * scale);
         const h = Math.floor(SVG_H * scale);
         title.style.width = w + 'px';
         title.style.height = h + 'px';
         title.style.left = '50%';
         title.style.top = '50%';
-        title.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+        title.style.transform = 'translate(-50%, -50%)';
     } else {
-        // Mobile: scale SVG to fit available area (no rotation — SVG is already vertical)
+        // Mobile: scale to fill available width, pin to top
         const availW = area.clientWidth;
-        const availH = area.clientHeight - 40; // 40px min gap to button
+        const availH = area.clientHeight - 24; // 24px min gap to cards
         const scale = Math.min(availW / SVG_W, availH / SVG_H);
         const w = Math.floor(SVG_W * scale);
         const h = Math.floor(SVG_H * scale);
         title.style.width = w + 'px';
         title.style.height = h + 'px';
-        title.style.left = Math.floor((availW - w) / 2) + 'px';
-        title.style.top = Math.floor((availH - h) / 2) + 'px';
+        title.style.left = '0px';
+        title.style.top = '0px';
+        title.style.transform = '';
     }
 }
 
@@ -388,7 +501,10 @@ function showMainScreen() {
     startTitleAnimation();
 }
 
-function showGameScreen() {
+let currentMode = 'classic';
+
+function showGameScreen(mode) {
+    currentMode = mode || 'classic';
     stopTitleAnimation();
     document.getElementById('mainScreen').style.display = 'none';
     document.getElementById('gameScreen').style.display = '';
@@ -402,9 +518,15 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Navigation event listeners
-document.getElementById('startBtn').addEventListener('click', showGameScreen);
-document.getElementById('logoBtn').addEventListener('click', showMainScreen);
+// Navigation event listeners — mode cards
+document.querySelectorAll('.mode-card').forEach(card => {
+    card.addEventListener('click', () => {
+        playSound('flip');
+        const mode = card.dataset.mode;
+        showGameScreen(mode);
+    });
+});
+document.getElementById('backBtn').addEventListener('click', showMainScreen);
 
 // Start on main screen
 showMainScreen();

@@ -27,7 +27,7 @@
     --radius-btn: 16px;
     --btn-height: 56px;
     --sound-btn-size: 44px;
-    --sound-btn-desktop-size: 36px;
+    --sound-btn-desktop-size: 44px;
 }
 
 /* ==================== */
@@ -58,7 +58,7 @@ body {
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: var(--padding-mobile);
+    padding: 16px;
     background: var(--color-bg);
     overflow: hidden;
 }
@@ -85,26 +85,151 @@ body {
     transition: fill 0.3s ease;
 }
 
-.start-btn {
-    width: 100%;
-    height: var(--btn-height);
-    background: var(--color-text);
-    border: none;
-    border-radius: var(--radius-btn);
-    font-family: var(--font-primary);
-    font-size: 20px;
-    font-weight: 400;
-    line-height: 100%;
-    color: var(--color-bg);
-    cursor: pointer;
-    transition: opacity 0.2s;
+/* Mode Cards */
+.mode-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     flex-shrink: 0;
     position: relative;
     z-index: 1;
 }
 
-.start-btn:active {
-    transform: scale(0.98);
+.mode-card {
+    min-height: 152px;
+    cursor: pointer;
+    border-radius: 16px;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.mode-card:active {
+    transform: scale(0.95);
+    background: var(--color-accent) !important;
+}
+
+.mode-card:active .mode-card-name {
+    color: var(--color-bg) !important;
+}
+
+.mode-card:active .mode-card-desc {
+    color: var(--color-bg) !important;
+    opacity: 0.5 !important;
+}
+
+/* Classic mode card */
+.mode-classic {
+    background: var(--color-primary);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+}
+
+.mode-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mode-classic .mode-card-name {
+    font-family: var(--font-primary);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--color-text);
+}
+
+.mode-classic .mode-card-desc {
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--color-text);
+    opacity: 0.7;
+}
+
+.mode-classic .mode-card-emoji {
+    font-size: 80px;
+    line-height: 1;
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    transform: scaleX(-1);
+}
+
+.mode-card-emoji-img {
+    position: absolute;
+    right: 16px;
+    bottom: 8px;
+    width: 100px;
+    height: auto;
+    transform: scaleX(-1);
+}
+
+/* Cards row */
+.mode-cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+/* Small mode cards */
+.mode-timed,
+.mode-limited {
+    padding: 16px;
+    padding-right: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mode-timed {
+    background: var(--color-text);
+}
+
+.mode-limited {
+    background: var(--color-text);
+}
+
+.mode-timed .mode-card-emoji,
+.mode-limited .mode-card-emoji {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.mode-timed .mode-card-name {
+    font-family: var(--font-primary);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--color-bg);
+}
+
+.mode-limited .mode-card-name {
+    font-family: var(--font-primary);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--color-bg);
+}
+
+.mode-timed .mode-card-desc {
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--color-bg);
+    opacity: 0.5;
+}
+
+.mode-limited .mode-card-desc {
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--color-bg);
+    opacity: 0.5;
 }
 
 .main-credit {
@@ -114,7 +239,7 @@ body {
     line-height: 100%;
     color: var(--color-text-muted);
     text-align: center;
-    margin-top: 16px;
+    margin-top: 24px;
     flex-shrink: 0;
 }
 
@@ -128,7 +253,7 @@ body {
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: var(--padding-mobile);
+    padding: 16px;
     position: relative;
     overflow: hidden;
 }
@@ -141,6 +266,13 @@ body {
     width: 100%;
     flex-shrink: 0;
     margin-bottom: 20px;
+    position: relative;
+}
+
+.header .logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 /* Test button (temporary) */
@@ -153,6 +285,30 @@ body {
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+/* Back button */
+.back-btn {
+    width: var(--sound-btn-size);
+    height: var(--sound-btn-size);
+    border: 1px solid var(--color-text);
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.back-btn svg {
+    width: 10px;
+    height: 16px;
 }
 
 /* Logo */
@@ -292,6 +448,15 @@ body {
     font-size: 12px;
 }
 
+/* Remaining label (timed mode) */
+.remaining-label {
+    font-family: var(--font-primary);
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--color-accent);
+    margin-bottom: 2px;
+}
+
 /* Best time display */
 .best-time-display {
     display: block;
@@ -343,8 +508,9 @@ body {
 }
 
 .win-emoji {
-    font-size: 50px;
-    line-height: 50px;
+    height: 90px;
+    width: 90px;
+    object-fit: contain;
     margin-bottom: 20px;
 }
 
@@ -405,6 +571,7 @@ body {
         position: absolute;
         top: var(--padding-desktop-v);
         left: var(--padding-desktop-h);
+        right: var(--padding-desktop-h);
         width: auto;
         margin-bottom: 0;
     }
@@ -484,18 +651,13 @@ body {
         position: absolute;
     }
 
-    .start-btn {
+    .mode-cards {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 340px;
-        height: 72px;
+        width: 400px;
         z-index: 2;
-    }
-
-    .start-btn:active {
-        transform: translate(-50%, -50%) scale(0.98);
     }
 
     .main-credit {
@@ -554,6 +716,7 @@ body {
     .header {
         top: var(--padding-desktop-v);
         left: var(--padding-desktop-lg-h);
+        right: var(--padding-desktop-lg-h);
     }
 
     .timer-wrapper {
