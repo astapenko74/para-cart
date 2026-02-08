@@ -276,7 +276,7 @@ let titleMissCount = 0;
 
 // SVG natural dimensions from viewBox
 const SVG_W = 324;
-const SVG_H = 601;
+const SVG_H = 563;
 
 // Layout: scale SVG title to fill available space
 function layoutMainTitle() {
