@@ -458,12 +458,12 @@ function titleAnimStep() {
     const s2 = titleSpans[i2];
 
     // First card
-    s1.style.fill = '#d5bff2';
+    s1.style.fill = '#bb87ff';
 
     setTimeout(() => {
         if (!titleAnimRunning) return;
         // Second card
-        s2.style.fill = '#d5bff2';
+        s2.style.fill = '#bb87ff';
 
         setTimeout(() => {
             if (!titleAnimRunning) return;
