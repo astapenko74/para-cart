@@ -4,8 +4,8 @@
     "description": "Memory card game",
     "start_url": "./",
     "display": "standalone",
-    "background_color": "#181818",
-    "theme_color": "#181818",
+    "background_color": "#000000",
+    "theme_color": "#000000",
     "icons": [
         {
             "src": "icon-192.png",
