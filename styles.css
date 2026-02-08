@@ -59,6 +59,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 16px;
+    padding-bottom: 24px;
     background: var(--color-bg);
     overflow: hidden;
 }
@@ -254,6 +255,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 16px;
+    padding-bottom: 24px;
     position: relative;
     overflow: hidden;
 }
