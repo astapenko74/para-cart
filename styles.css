@@ -372,7 +372,7 @@ body {
 /* Game board container */
 .game-container {
     flex: 0 1 calc((100vw - 52px) * 4 / 3 + 6px);
-    margin-top: 50px;
+    margin-top: 40px;
     min-height: 0;
 }
 
