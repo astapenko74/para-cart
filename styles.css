@@ -59,7 +59,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 16px;
-    padding-bottom: 24px;
+    padding-bottom: 32px;
     background: var(--color-bg);
     overflow: hidden;
 }
@@ -99,7 +99,7 @@ body {
 .mode-card {
     min-height: 152px;
     cursor: pointer;
-    border-radius: 16px;
+    border-radius: 20px;
     transition: transform 0.15s ease, background 0.15s ease;
 }
 
@@ -255,7 +255,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 16px;
-    padding-bottom: 24px;
+    padding-bottom: 32px;
     position: relative;
     overflow: hidden;
 }
