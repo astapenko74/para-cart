@@ -264,60 +264,54 @@ soundBtnDesktop.addEventListener('click', toggleSound);
 // MAIN SCREEN           //
 // ==================== //
 
+// Letters mapped to SVG paths: П(0), А(1), Р(2), А(3), К(4), А(5), Р(6), Т(7)
 const TITLE_CHARS = ['П', 'А', 'Р', 'А', 'К', 'А', 'Р', 'Т'];
-// Precomputed matching pairs: [i, j] where TITLE_CHARS[i] === TITLE_CHARS[j]
+// All letters participate in animation
+// Matching pairs for forced matches: А-А and Р-Р
 const TITLE_PAIRS = [[1,3],[1,5],[3,5],[2,6]];
 let titleSpans = [];
 let titleAnimTimer = null;
 let titleAnimRunning = false;
 let titleMissCount = 0;
 
-// Layout: scale title to fill available space
+// SVG natural dimensions from viewBox
+const SVG_W = 330;
+const SVG_H = 617;
+
+// Layout: scale SVG title to fill available space
 function layoutMainTitle() {
     const isDesktop = window.innerWidth >= 601;
     const area = document.getElementById('mainTitleArea');
     const title = document.getElementById('mainTitle');
 
-    // Measure at base size (use inline-block to get true text width)
-    title.style.transform = 'none';
-    title.style.fontSize = '100px';
-    title.style.display = 'inline-block';
-    const baseW = title.offsetWidth;
-    const baseH = title.offsetHeight;
-    title.style.display = '';
-
     if (isDesktop) {
-        // Desktop: no rotation, stretch to fill width
-        const cs = getComputedStyle(area);
-        const availW = area.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-        const scale = availW / baseW;
-        const fontSize = Math.floor(100 * scale);
-        title.style.fontSize = fontSize + 'px';
-        title.style.left = '';
-        title.style.top = '';
-        title.style.transform = '';
+        // Desktop: rotate 90° to horizontal, stretch to fill viewport width (minus padding)
+        const viewW = window.innerWidth - 100; // 50px padding on each side
+        const scale = viewW / SVG_H; // After 90° rotation, SVG_H becomes visual width
+        const w = Math.floor(SVG_W * scale);
+        const h = Math.floor(SVG_H * scale);
+        title.style.width = w + 'px';
+        title.style.height = h + 'px';
+        title.style.left = '50%';
+        title.style.top = '50%';
+        title.style.transform = 'translate(-50%, -50%) rotate(90deg)';
     } else {
-        // Mobile: rotate -90° and fill available height
+        // Mobile: scale SVG to fit available area (no rotation — SVG is already vertical)
         const availW = area.clientWidth;
-        const availH = area.clientHeight - 20; // 20px min gap to button
-        const scaleH = availH / baseW;
-        const scaleW = availW / baseH;
-        const scale = Math.min(scaleH, scaleW);
-        const fontSize = Math.floor(100 * scale);
-        title.style.fontSize = fontSize + 'px';
-
-        const textW = title.offsetWidth;
-        const textH = title.offsetHeight;
-
-        title.style.left = (availW / 2 - textW / 2) + 'px';
-        title.style.top = (textW / 2 - textH / 2) + 'px';
-        title.style.transform = 'rotate(-90deg)';
+        const availH = area.clientHeight - 40; // 40px min gap to button
+        const scale = Math.min(availW / SVG_W, availH / SVG_H);
+        const w = Math.floor(SVG_W * scale);
+        const h = Math.floor(SVG_H * scale);
+        title.style.width = w + 'px';
+        title.style.height = h + 'px';
+        title.style.left = Math.floor((availW - w) / 2) + 'px';
+        title.style.top = Math.floor((availH - h) / 2) + 'px';
     }
 }
 
 // Title animation: demonstrates the matching mechanic
 function startTitleAnimation() {
-    titleSpans = document.querySelectorAll('#mainTitle span');
+    titleSpans = document.querySelectorAll('#mainTitle path');
     titleAnimRunning = true;
     titleAnimTimer = setTimeout(titleAnimStep, 800);
 }
@@ -325,12 +319,11 @@ function startTitleAnimation() {
 function stopTitleAnimation() {
     titleAnimRunning = false;
     if (titleAnimTimer) { clearTimeout(titleAnimTimer); titleAnimTimer = null; }
-    titleSpans.forEach(s => s.style.color = '');
+    titleSpans.forEach(s => s.style.fill = '');
 }
 
 function titleAnimStep() {
     if (!titleAnimRunning) return;
-    const len = TITLE_CHARS.length;
     let i1, i2;
 
     if (titleMissCount >= 3) {
@@ -339,39 +332,44 @@ function titleAnimStep() {
         i1 = pair[0];
         i2 = pair[1];
     } else {
-        i1 = Math.floor(Math.random() * len);
-        do { i2 = Math.floor(Math.random() * len); } while (i2 === i1);
+        // All letters except К (index 4)
+        const pool = [0, 1, 2, 3, 5, 6, 7];
+        const pi1 = Math.floor(Math.random() * pool.length);
+        i1 = pool[pi1];
+        let pi2;
+        do { pi2 = Math.floor(Math.random() * pool.length); } while (pi2 === pi1);
+        i2 = pool[pi2];
     }
 
     const s1 = titleSpans[i1];
     const s2 = titleSpans[i2];
 
     // First card
-    s1.style.color = '#206CF3';
+    s1.style.fill = '#206CF3';
 
     setTimeout(() => {
         if (!titleAnimRunning) return;
         // Second card
-        s2.style.color = '#206CF3';
+        s2.style.fill = '#206CF3';
 
         setTimeout(() => {
             if (!titleAnimRunning) return;
             if (TITLE_CHARS[i1] === TITLE_CHARS[i2]) {
                 // Match → green flash → return
                 titleMissCount = 0;
-                s1.style.color = '#CCED00';
-                s2.style.color = '#CCED00';
+                s1.style.fill = '#CCED00';
+                s2.style.fill = '#CCED00';
                 setTimeout(() => {
                     if (!titleAnimRunning) return;
-                    s1.style.color = '';
-                    s2.style.color = '';
+                    s1.style.fill = '';
+                    s2.style.fill = '';
                     titleAnimTimer = setTimeout(titleAnimStep, 600);
                 }, 500);
             } else {
                 // No match → return
                 titleMissCount++;
-                s1.style.color = '';
-                s2.style.color = '';
+                s1.style.fill = '';
+                s2.style.fill = '';
                 titleAnimTimer = setTimeout(titleAnimStep, 600);
             }
         }, 500);
